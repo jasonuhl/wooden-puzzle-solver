@@ -4,8 +4,6 @@ import os
 import sys
 import multiprocessing
 
-solution = []
-
 threads = multiprocessing.cpu_count()
 
 
@@ -60,12 +58,6 @@ def turn_the_crank(universe, dingusrotations, thread, threads):
 					universe = olduniverse
 				
 	return False
-
-
-def print_solution(solution):
-	for dingus in solution:
-		print dingus
-	print
 
 
 def rotate_xy(dingus, rotnum):	
