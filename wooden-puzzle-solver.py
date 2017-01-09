@@ -16,7 +16,6 @@ def instantiate_universe():
 	
 	
 def main():
-
 	dingusL = [[0,0,0], [1,0,0], [2,0,0], [2,1,0]]
 	dingusT = [[0,0,0], [1,0,0], [1,1,0], [2,0,0]]
 	dingusS = [[0,0,0], [1,0,0], [1,1,0], [2,1,0]]
@@ -37,7 +36,7 @@ def main():
 			turn_the_crank(universe, dingusrotations, j, threads)
 	while True:
 		os.wait()
-	
+
 
 def turn_the_crank(universe, dingusrotations, thread, threads):
 	if len(dingusrotations)==0:
@@ -105,7 +104,6 @@ def rotate_z(dingus, rotnum):
 
 
 def place_dingus(universe, dingus, origin, dingnum):
-
 	d = copy.deepcopy(dingus)
 	d = rel_to_abs(d, origin)
 	for cube in d:
