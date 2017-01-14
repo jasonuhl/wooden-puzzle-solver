@@ -1,0 +1,6 @@
+[package]
+name = "wooden-puzzle-solver"
+version = "0.1.0"
+authors = ["jasonuhl"]
+
+[dependencies]

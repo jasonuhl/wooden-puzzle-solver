@@ -4,6 +4,9 @@ This was an afternoon hack to generate all possible solutions to a
 wooden puzzle, whose proper name is unknown.  Co-author:  Conor
 McCutcheon.
 
+The Python implementation came first.  Now there's a Rust
+implementation too!
+
 ## License
 
 This program is free software; you can redistribute it and/or modify
