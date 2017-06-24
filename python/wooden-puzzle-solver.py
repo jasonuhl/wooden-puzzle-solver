@@ -29,11 +29,14 @@ def main():
 
     universe = instantiate_universe()
 
-    for j in xrange(threads):
-        if(not os.fork()):
-            turn_the_crank(universe, dingusrotations, j, threads)
-    while True:
-        os.wait()
+    if threads:
+        for j in xrange(threads):
+            if not os.fork():
+                turn_the_crank(universe, dingusrotations, j, threads)
+        while True:
+            os.wait()
+    else:
+        turn_the_crank(universe, dingusrotations, 0, 1)
 
 
 def turn_the_crank(universe, dingusrotations, thread, threads):
