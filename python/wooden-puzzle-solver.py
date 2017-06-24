@@ -141,10 +141,17 @@ def translate(cubes, origin):
     return newcubes
 
 
-def place_cubes(universe, cubes, dingnum):
+def placeable(universe, cubes):
     for cube in cubes:
         if universe[cube[0]][cube[1]][cube[2]] != 0:
             return False
+
+    return True
+
+
+def place_cubes(universe, cubes, dingnum):
+    if not placeable(universe, cubes):
+        return False
 
     for cube in cubes:
         universe[cube[0]][cube[1]][cube[2]] = dingnum
