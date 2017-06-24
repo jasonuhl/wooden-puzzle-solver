@@ -96,11 +96,10 @@ def turn_the_crank(universe, dingi, thread, threads):
         if len(dingi) == 7 and i % threads != thread:
             continue
 
-        olduniverse = copy.deepcopy(universe)
         if placeable(universe, dingi[0].placements[i]):
             place_cubes(universe, dingi[0].placements[i], 8 - len(dingi))
-            turn_the_crank(copy.deepcopy(universe), dingi[1:], thread, threads)
-        universe = olduniverse
+            turn_the_crank(universe, dingi[1:], thread, threads)
+            place_cubes(universe, dingi[0].placements[i], 0)
 
     return False
 
