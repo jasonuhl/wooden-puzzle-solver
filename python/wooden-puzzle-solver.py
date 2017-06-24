@@ -105,22 +105,22 @@ def rotate_z(cubes, rotnum):
 
 
 def translate(cubes, origin):
-    return [
-        [
-            cube[n] + origin[n]
-            for n in xrange(len(cube))
-            ]
-        for cube in cubes
-        ]
+    newcubes = []
+    for cube in cubes:
+        newcube = [cube[i] + origin[i] for i in xrange(len(cube))]
+        if not all(0 <= coord < 3 for coord in newcube):
+            return None
+        newcubes.append(newcube)
+
+    return newcubes
 
 
 def place_cubes(universe, cubes, origin, dingnum):
     cubes = translate(cubes, origin)
-    for cube in cubes:
-        for n in xrange(len(cube)):
-            if (cube[n] > 2) or (cube[n] < 0):
-                return False
+    if not cubes:
+        return False
 
+    for cube in cubes:
         if universe[cube[0]][cube[1]][cube[2]] != 0:
             return False
 
