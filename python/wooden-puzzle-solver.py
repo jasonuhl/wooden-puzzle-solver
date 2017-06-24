@@ -8,9 +8,9 @@ threads = multiprocessing.cpu_count()
 
 
 def instantiate_universe():
-    x = [0 for n in xrange(0,3)]
-    y = [copy.deepcopy(x) for n in xrange(0,3)]
-    return [copy.deepcopy(y) for n in xrange(0,3)]
+    x = [0 for n in xrange(3)]
+    y = [copy.deepcopy(x) for n in xrange(3)]
+    return [copy.deepcopy(y) for n in xrange(3)]
 
 
 def main():
@@ -21,15 +21,15 @@ def main():
     dingi = [dingusL, dingusL, dingusL, dingusL, dingusT, dingusS, dingusR]
     dingusrotations = []
 
-    for i in xrange(0,len(dingi)):
+    for i in xrange(len(dingi)):
         dingusrotations.append([])
-        for m in xrange(0,6):
-            for n in xrange(0,4):
+        for m in xrange(6):
+            for n in xrange(4):
                 dingusrotations[i].append(rotate_z(rotate_xy(dingi[i], n), m))
 
     universe = instantiate_universe()
 
-    for j in xrange(0, threads):
+    for j in xrange(threads):
         if(not os.fork()):
             turn_the_crank(universe, dingusrotations, j, threads)
     while True:
@@ -41,13 +41,13 @@ def turn_the_crank(universe, dingusrotations, thread, threads):
         print 'We win!'
         print_universe(universe)
         return True
-    for x in xrange(0,3):
-        for y in xrange(0,3):
-            for z in xrange(0,3):
+    for x in xrange(3):
+        for y in xrange(3):
+            for z in xrange(3):
 
                 if universe[x][y][z] != 0:
                     continue
-                for i in xrange(0, len(dingusrotations[0])):
+                for i in xrange(len(dingusrotations[0])):
                     if len(dingusrotations)==7:
                         if (i%threads != thread):
                             continue
@@ -74,7 +74,7 @@ def rotate_xy(dingus, rotnum):
 def print_universe(universe):
     for z in xrange(2,-1,-1):
         for y in xrange(2,-1,-1):
-            for x in xrange(0,3):
+            for x in xrange(3):
                 print universe[x][y][z],
             print
         print
@@ -100,7 +100,7 @@ def place_dingus(universe, dingus, origin, dingnum):
     d = rel_to_abs(d, origin)
     for cube in d:
 
-        for n in xrange(0,len(cube)):
+        for n in xrange(len(cube)):
             if (cube[n] > 2) or (cube[n] < 0):
                 return False
         if universe[cube[0]][cube[1]][cube[2]] != 0:
@@ -113,7 +113,7 @@ def place_dingus(universe, dingus, origin, dingnum):
 
 def rel_to_abs(dingus, origin):
     for cube in dingus:
-        for n in xrange(0,len(cube)):
+        for n in xrange(len(cube)):
             cube[n] = cube[n] + origin[n]
     return dingus
 
