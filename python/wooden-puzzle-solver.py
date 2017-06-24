@@ -72,22 +72,22 @@ def turn_the_crank(universe, dingusrotations, thread, threads):
                             continue
 
                     olduniverse = copy.deepcopy(universe)
-                    if place_dingus(universe, dingusrotations[0][i], [x,y,z], 8-len(dingusrotations)):
+                    if place_cubes(universe, dingusrotations[0][i], [x,y,z], 8-len(dingusrotations)):
                         turn_the_crank(copy.deepcopy(universe), dingusrotations[1:], thread, threads)
                     universe = olduniverse
 
     return False
 
 
-def rotate_xy(dingus, rotnum):
+def rotate_xy(cubes, rotnum):
     if rotnum == 0:
-        return dingus
+        return cubes
     if rotnum == 1:
-        return [(lambda cube: [cube[1], -cube[0], cube[2]])(cube) for cube in dingus]
+        return [(lambda cube: [cube[1], -cube[0], cube[2]])(cube) for cube in cubes]
     if rotnum == 2:
-        return [(lambda cube: [-cube[0], -cube[1], cube[2]])(cube) for cube in dingus]
+        return [(lambda cube: [-cube[0], -cube[1], cube[2]])(cube) for cube in cubes]
     if rotnum == 3:
-        return [(lambda cube: [-cube[1], cube[0], cube[2]])(cube) for cube in dingus]
+        return [(lambda cube: [-cube[1], cube[0], cube[2]])(cube) for cube in cubes]
 
 
 def print_universe(universe):
@@ -99,23 +99,23 @@ def print_universe(universe):
         print
 
 
-def rotate_z(dingus, rotnum):
+def rotate_z(cubes, rotnum):
     if rotnum == 0:
-        return dingus
+        return cubes
     if rotnum == 1:
-        return [(lambda cube: [cube[0], cube[2], -cube[1]])(cube) for cube in dingus]
+        return [(lambda cube: [cube[0], cube[2], -cube[1]])(cube) for cube in cubes]
     if rotnum == 2:
-        return [(lambda cube: [cube[0], -cube[1], -cube[2]])(cube) for cube in dingus]
+        return [(lambda cube: [cube[0], -cube[1], -cube[2]])(cube) for cube in cubes]
     if rotnum == 3:
-        return [(lambda cube: [cube[0], -cube[2], cube[1]])(cube) for cube in dingus]
+        return [(lambda cube: [cube[0], -cube[2], cube[1]])(cube) for cube in cubes]
     if rotnum == 4:
-        return [(lambda cube: [-cube[2], cube[1], cube[0]])(cube) for cube in dingus]
+        return [(lambda cube: [-cube[2], cube[1], cube[0]])(cube) for cube in cubes]
     if rotnum == 5:
-        return [(lambda cube: [cube[2], cube[1], -cube[0]])(cube) for cube in dingus]
+        return [(lambda cube: [cube[2], cube[1], -cube[0]])(cube) for cube in cubes]
 
 
-def place_dingus(universe, dingus, origin, dingnum):
-    d = copy.deepcopy(dingus)
+def place_cubes(universe, cubes, origin, dingnum):
+    d = copy.deepcopy(cubes)
     d = rel_to_abs(d, origin)
     for cube in d:
 
@@ -130,11 +130,11 @@ def place_dingus(universe, dingus, origin, dingnum):
     return True
 
 
-def rel_to_abs(dingus, origin):
-    for cube in dingus:
+def rel_to_abs(cubes, origin):
+    for cube in cubes:
         for n in xrange(len(cube)):
             cube[n] = cube[n] + origin[n]
-    return dingus
+    return cubes
 
 
 if __name__ == '__main__':
