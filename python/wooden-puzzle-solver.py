@@ -38,13 +38,18 @@ def nodups(items):
 
 
 class Dingus:
-    def __init__(self, cubes):
+    def __init__(self, cubes, rotate=True):
         self.cubes = cubes
-        self.rotations = [
-            rotate_z(rotate_xy(self.cubes, n), m)
-            for m in xrange(6)
-            for n in xrange(4)
+
+        if rotate:
+            self.rotations = [
+                rotate_z(rotate_xy(self.cubes, n), m)
+                for m in xrange(6)
+                for n in xrange(4)
             ]
+        else:
+            self.rotations = [self.cubes]
+
         placements = [
             translate(rotation, (dx, dy, dz))
             for rotation in self.rotations
@@ -70,7 +75,7 @@ class Dingus:
 def main():
     dingusL = Dingus([(0,0,0), (1,0,0), (2,0,0), (2,1,0)])
     dingusT = Dingus([(0,0,0), (1,0,0), (1,1,0), (2,0,0)])
-    dingusS = Dingus([(0,0,0), (1,0,0), (1,1,0), (2,1,0)])
+    dingusS = Dingus([(0,0,0), (1,0,0), (1,1,0), (2,1,0)], rotate=False)
     dingusR = Dingus([(0,0,0), (0,1,0), (1,1,0)])
     dingi = [dingusL, dingusL, dingusL, dingusL, dingusT, dingusS, dingusR]
 
