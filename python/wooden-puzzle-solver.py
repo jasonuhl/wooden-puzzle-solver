@@ -30,11 +30,18 @@ def main():
     universe = instantiate_universe()
 
     if threads:
+        pids = []
         for j in xrange(threads):
-            if not os.fork():
+            pid = os.fork()
+            if pid:
+                pids.append(pid)
+            else:
                 turn_the_crank(universe, dingusrotations, j, threads)
-        while True:
-            os.wait()
+                return
+
+        for pid in pids:
+            os.waitpid(pid, 0)
+
     else:
         turn_the_crank(universe, dingusrotations, 0, 1)
 
