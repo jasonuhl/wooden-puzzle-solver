@@ -97,7 +97,8 @@ def turn_the_crank(universe, dingi, thread, threads):
             continue
 
         olduniverse = copy.deepcopy(universe)
-        if place_cubes(universe, dingi[0].placements[i], 8 - len(dingi)):
+        if placeable(universe, dingi[0].placements[i]):
+            place_cubes(universe, dingi[0].placements[i], 8 - len(dingi))
             turn_the_crank(copy.deepcopy(universe), dingi[1:], thread, threads)
         universe = olduniverse
 
@@ -150,13 +151,8 @@ def placeable(universe, cubes):
 
 
 def place_cubes(universe, cubes, dingnum):
-    if not placeable(universe, cubes):
-        return False
-
     for cube in cubes:
         universe[cube[0]][cube[1]][cube[2]] = dingnum
-
-    return True
 
 
 def print_universe(universe):
