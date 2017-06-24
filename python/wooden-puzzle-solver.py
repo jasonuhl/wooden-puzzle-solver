@@ -113,10 +113,19 @@ def rotate_z(cubes, rotnum):
         return [(lambda cube: [cube[2], cube[1], -cube[0]])(cube) for cube in cubes]
 
 
+def translate(cubes, origin):
+    return [
+        [
+            cube[n] + origin[n]
+            for n in xrange(len(cube))
+            ]
+        for cube in cubes
+        ]
+
+
 def place_cubes(universe, cubes, origin, dingnum):
-    d = copy.deepcopy(cubes)
-    d = rel_to_abs(d, origin)
-    for cube in d:
+    cubes = translate(cubes, origin)
+    for cube in cubes:
         for n in xrange(len(cube)):
             if (cube[n] > 2) or (cube[n] < 0):
                 return False
@@ -124,18 +133,10 @@ def place_cubes(universe, cubes, origin, dingnum):
         if universe[cube[0]][cube[1]][cube[2]] != 0:
             return False
 
-    for cube in d:
+    for cube in cubes:
         universe[cube[0]][cube[1]][cube[2]] = dingnum
 
     return True
-
-
-def rel_to_abs(cubes, origin):
-    for cube in cubes:
-        for n in xrange(len(cube)):
-            cube[n] = cube[n] + origin[n]
-
-    return cubes
 
 
 if __name__ == '__main__':
