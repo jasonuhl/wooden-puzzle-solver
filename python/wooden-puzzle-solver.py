@@ -89,15 +89,6 @@ def rotate_xy(cubes, rotnum):
         return [(lambda cube: [-cube[1], cube[0], cube[2]])(cube) for cube in cubes]
 
 
-def print_universe(universe):
-    for z in xrange(2,-1,-1):
-        for y in xrange(2,-1,-1):
-            for x in xrange(3):
-                print universe[x][y][z],
-            print
-        print
-
-
 def rotate_z(cubes, rotnum):
     if rotnum == 0:
         return cubes
@@ -137,6 +128,15 @@ def place_cubes(universe, cubes, origin, dingnum):
         universe[cube[0]][cube[1]][cube[2]] = dingnum
 
     return True
+
+
+def print_universe(universe):
+    for z in xrange(2,-1,-1):
+        for y in xrange(2,-1,-1):
+            for x in xrange(3):
+                print universe[x][y][z],
+            print
+        print
 
 
 if __name__ == '__main__':
