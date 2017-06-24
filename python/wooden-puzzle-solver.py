@@ -22,7 +22,7 @@ class Dingus:
             for n in xrange(4)
             ]
         placements = [
-            translate(rotation, [dx, dy, dz])
+            translate(rotation, (dx, dy, dz))
             for rotation in self.rotations
             for dx in xrange(3)
             for dy in xrange(3)
@@ -36,10 +36,10 @@ class Dingus:
 
 
 def main():
-    dingusL = Dingus([[0,0,0], [1,0,0], [2,0,0], [2,1,0]])
-    dingusT = Dingus([[0,0,0], [1,0,0], [1,1,0], [2,0,0]])
-    dingusS = Dingus([[0,0,0], [1,0,0], [1,1,0], [2,1,0]])
-    dingusR = Dingus([[0,0,0], [0,1,0], [1,1,0]])
+    dingusL = Dingus([(0,0,0), (1,0,0), (2,0,0), (2,1,0)])
+    dingusT = Dingus([(0,0,0), (1,0,0), (1,1,0), (2,0,0)])
+    dingusS = Dingus([(0,0,0), (1,0,0), (1,1,0), (2,1,0)])
+    dingusR = Dingus([(0,0,0), (0,1,0), (1,1,0)])
     dingi = [dingusL, dingusL, dingusL, dingusL, dingusT, dingusS, dingusR]
 
     universe = instantiate_universe()
@@ -83,32 +83,32 @@ def rotate_xy(cubes, rotnum):
     if rotnum == 0:
         return cubes
     if rotnum == 1:
-        return [(lambda cube: [cube[1], -cube[0], cube[2]])(cube) for cube in cubes]
+        return tuple((lambda cube: [cube[1], -cube[0], cube[2]])(cube) for cube in cubes)
     if rotnum == 2:
-        return [(lambda cube: [-cube[0], -cube[1], cube[2]])(cube) for cube in cubes]
+        return tuple((lambda cube: [-cube[0], -cube[1], cube[2]])(cube) for cube in cubes)
     if rotnum == 3:
-        return [(lambda cube: [-cube[1], cube[0], cube[2]])(cube) for cube in cubes]
+        return tuple((lambda cube: [-cube[1], cube[0], cube[2]])(cube) for cube in cubes)
 
 
 def rotate_z(cubes, rotnum):
     if rotnum == 0:
         return cubes
     if rotnum == 1:
-        return [(lambda cube: [cube[0], cube[2], -cube[1]])(cube) for cube in cubes]
+        return tuple((lambda cube: [cube[0], cube[2], -cube[1]])(cube) for cube in cubes)
     if rotnum == 2:
-        return [(lambda cube: [cube[0], -cube[1], -cube[2]])(cube) for cube in cubes]
+        return tuple((lambda cube: [cube[0], -cube[1], -cube[2]])(cube) for cube in cubes)
     if rotnum == 3:
-        return [(lambda cube: [cube[0], -cube[2], cube[1]])(cube) for cube in cubes]
+        return tuple((lambda cube: [cube[0], -cube[2], cube[1]])(cube) for cube in cubes)
     if rotnum == 4:
-        return [(lambda cube: [-cube[2], cube[1], cube[0]])(cube) for cube in cubes]
+        return tuple((lambda cube: [-cube[2], cube[1], cube[0]])(cube) for cube in cubes)
     if rotnum == 5:
-        return [(lambda cube: [cube[2], cube[1], -cube[0]])(cube) for cube in cubes]
+        return tuple((lambda cube: [cube[2], cube[1], -cube[0]])(cube) for cube in cubes)
 
 
 def translate(cubes, origin):
     newcubes = []
     for cube in cubes:
-        newcube = [cube[i] + origin[i] for i in xrange(len(cube))]
+        newcube = tuple(cube[i] + origin[i] for i in xrange(len(cube)))
         if not all(0 <= coord < 3 for coord in newcube):
             return None
         newcubes.append(newcube)
