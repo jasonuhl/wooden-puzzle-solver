@@ -115,13 +115,16 @@ def fill(universe, dingi, thread, threads, to_fill=None):
         # among dingus.fillers[space] because any other positions of a
         # dingus would protrude into the spaces that we have already
         # filled.
+        last = None
         for i in range(len(dingi)):
             dingus = dingi.pop(i)
-            for placement in dingus.fillers[space]:
-                if placeable(universe, placement):
-                    place_cubes(universe, placement, 8 - len(dingi))
-                    fill(universe, dingi, thread, threads, to_fill)
-                    place_cubes(universe, placement, 0)
+            if dingus != last:
+                for placement in dingus.fillers[space]:
+                    if placeable(universe, placement):
+                        place_cubes(universe, placement, 8 - len(dingi))
+                        fill(universe, dingi, thread, threads, to_fill)
+                        place_cubes(universe, placement, 0)
+                last = dingus
             dingi.insert(i, dingus)
     to_fill.append(space)
 
