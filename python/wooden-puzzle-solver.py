@@ -29,7 +29,6 @@ def main():
     dingusS = Dingus([[0,0,0], [1,0,0], [1,1,0], [2,1,0]])
     dingusR = Dingus([[0,0,0], [0,1,0], [1,1,0]])
     dingi = [dingusL, dingusL, dingusL, dingusL, dingusT, dingusS, dingusR]
-    dingusrotations = []
 
     dingusrotations = [
         dingus.rotations
@@ -56,23 +55,23 @@ def main():
 
 
 def turn_the_crank(universe, dingusrotations, thread, threads):
-    if len(dingusrotations)==0:
+    if not dingusrotations:
         print 'We win!'
         print_universe(universe)
         return True
+
     for x in xrange(3):
         for y in xrange(3):
             for z in xrange(3):
-
                 if universe[x][y][z] != 0:
                     continue
+
                 for i in xrange(len(dingusrotations[0])):
-                    if len(dingusrotations)==7:
-                        if (i%threads != thread):
-                            continue
+                    if len(dingusrotations) == 7 and i % threads != thread:
+                        continue
 
                     olduniverse = copy.deepcopy(universe)
-                    if place_cubes(universe, dingusrotations[0][i], [x,y,z], 8-len(dingusrotations)):
+                    if place_cubes(universe, dingusrotations[0][i], [x,y,z], 8 - len(dingusrotations)):
                         turn_the_crank(copy.deepcopy(universe), dingusrotations[1:], thread, threads)
                     universe = olduniverse
 
@@ -118,15 +117,16 @@ def place_cubes(universe, cubes, origin, dingnum):
     d = copy.deepcopy(cubes)
     d = rel_to_abs(d, origin)
     for cube in d:
-
         for n in xrange(len(cube)):
             if (cube[n] > 2) or (cube[n] < 0):
                 return False
+
         if universe[cube[0]][cube[1]][cube[2]] != 0:
             return False
 
     for cube in d:
         universe[cube[0]][cube[1]][cube[2]] = dingnum
+
     return True
 
 
@@ -134,6 +134,7 @@ def rel_to_abs(cubes, origin):
     for cube in cubes:
         for n in xrange(len(cube)):
             cube[n] = cube[n] + origin[n]
+
     return cubes
 
 
