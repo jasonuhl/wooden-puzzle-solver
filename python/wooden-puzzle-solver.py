@@ -13,19 +13,28 @@ def instantiate_universe():
     return [copy.deepcopy(y) for n in xrange(3)]
 
 
+class Dingus:
+    def __init__(self, cubes):
+        self.cubes = cubes
+        self.rotations = [
+            rotate_z(rotate_xy(self.cubes, n), m)
+            for m in xrange(6)
+            for n in xrange(4)
+            ]
+
+
 def main():
-    dingusL = [[0,0,0], [1,0,0], [2,0,0], [2,1,0]]
-    dingusT = [[0,0,0], [1,0,0], [1,1,0], [2,0,0]]
-    dingusS = [[0,0,0], [1,0,0], [1,1,0], [2,1,0]]
-    dingusR = [[0,0,0], [0,1,0], [1,1,0]]
+    dingusL = Dingus([[0,0,0], [1,0,0], [2,0,0], [2,1,0]])
+    dingusT = Dingus([[0,0,0], [1,0,0], [1,1,0], [2,0,0]])
+    dingusS = Dingus([[0,0,0], [1,0,0], [1,1,0], [2,1,0]])
+    dingusR = Dingus([[0,0,0], [0,1,0], [1,1,0]])
     dingi = [dingusL, dingusL, dingusL, dingusL, dingusT, dingusS, dingusR]
     dingusrotations = []
 
-    for i in xrange(len(dingi)):
-        dingusrotations.append([])
-        for m in xrange(6):
-            for n in xrange(4):
-                dingusrotations[i].append(rotate_z(rotate_xy(dingi[i], n), m))
+    dingusrotations = [
+        dingus.rotations
+        for dingus in dingi
+        ]
 
     universe = instantiate_universe()
 
