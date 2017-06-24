@@ -30,11 +30,6 @@ def main():
     dingusR = Dingus([[0,0,0], [0,1,0], [1,1,0]])
     dingi = [dingusL, dingusL, dingusL, dingusL, dingusT, dingusS, dingusR]
 
-    dingusrotations = [
-        dingus.rotations
-        for dingus in dingi
-        ]
-
     universe = instantiate_universe()
 
     if threads:
@@ -44,18 +39,18 @@ def main():
             if pid:
                 pids.append(pid)
             else:
-                turn_the_crank(universe, dingusrotations, j, threads)
+                turn_the_crank(universe, dingi, j, threads)
                 return
 
         for pid in pids:
             os.waitpid(pid, 0)
 
     else:
-        turn_the_crank(universe, dingusrotations, 0, 1)
+        turn_the_crank(universe, dingi, 0, 1)
 
 
-def turn_the_crank(universe, dingusrotations, thread, threads):
-    if not dingusrotations:
+def turn_the_crank(universe, dingi, thread, threads):
+    if not dingi:
         print 'We win!'
         print_universe(universe)
         return True
@@ -66,13 +61,13 @@ def turn_the_crank(universe, dingusrotations, thread, threads):
                 if universe[x][y][z] != 0:
                     continue
 
-                for i in xrange(len(dingusrotations[0])):
-                    if len(dingusrotations) == 7 and i % threads != thread:
+                for i in xrange(len(dingi[0].rotations)):
+                    if len(dingi) == 7 and i % threads != thread:
                         continue
 
                     olduniverse = copy.deepcopy(universe)
-                    if place_cubes(universe, dingusrotations[0][i], [x,y,z], 8 - len(dingusrotations)):
-                        turn_the_crank(copy.deepcopy(universe), dingusrotations[1:], thread, threads)
+                    if place_cubes(universe, dingi[0].rotations[i], [x,y,z], 8 - len(dingi)):
+                        turn_the_crank(copy.deepcopy(universe), dingi[1:], thread, threads)
                     universe = olduniverse
 
     return False
