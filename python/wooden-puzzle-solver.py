@@ -38,7 +38,8 @@ def nodups(items):
 
 
 class Dingus:
-    def __init__(self, cubes, rotate=True):
+    def __init__(self, name, cubes, rotate=True):
+        self.name = name
         self.cubes = cubes
 
         if rotate:
@@ -47,8 +48,10 @@ class Dingus:
                 for m in xrange(6)
                 for n in xrange(4)
             ]
+            sys.stderr.write("Dingus %s: found %d rotations\n" % (self.name, len(self.rotations),))
         else:
             self.rotations = [self.cubes]
+            sys.stderr.write("Dingus %s: ignoring rotations\n" % (self.name,))
 
         placements = [
             translate(rotation, (dx, dy, dz))
@@ -71,12 +74,14 @@ class Dingus:
         for placement in placements:
             self.fillers[placement[0]].append(placement)
 
+        sys.stderr.write("          found %d placements\n" % (len(self.placements),))
+
 
 def main():
-    dingusL = Dingus([(0,0,0), (1,0,0), (2,0,0), (2,1,0)])
-    dingusT = Dingus([(0,0,0), (1,0,0), (1,1,0), (2,0,0)])
-    dingusS = Dingus([(0,0,0), (1,0,0), (1,1,0), (2,1,0)], rotate=False)
-    dingusR = Dingus([(0,0,0), (0,1,0), (1,1,0)])
+    dingusL = Dingus("L", [(0,0,0), (1,0,0), (2,0,0), (2,1,0)])
+    dingusT = Dingus("T", [(0,0,0), (1,0,0), (1,1,0), (2,0,0)])
+    dingusS = Dingus("S", [(0,0,0), (1,0,0), (1,1,0), (2,1,0)], rotate=False)
+    dingusR = Dingus("R", [(0,0,0), (0,1,0), (1,1,0)])
     dingi = [dingusL, dingusL, dingusL, dingusL, dingusT, dingusS, dingusR]
 
     universe = instantiate_universe()
