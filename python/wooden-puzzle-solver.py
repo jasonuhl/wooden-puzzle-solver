@@ -7,10 +7,34 @@ import multiprocessing
 threads = multiprocessing.cpu_count()
 
 
+SPACES = [
+    (x,y,z)
+    for x in range(3)
+    for y in range(3)
+    for z in range(3)
+    ]
+
+
 def instantiate_universe():
     x = [0 for n in xrange(3)]
     y = [copy.deepcopy(x) for n in xrange(3)]
     return [copy.deepcopy(y) for n in xrange(3)]
+
+
+def nodups(items):
+    items = iter(items)
+    try:
+        last = items.next()
+        yield last
+        while True:
+            item = items.next()
+            if item == last:
+                continue
+            else:
+                yield item
+                last = item
+    except StopIteration:
+        return
 
 
 class Dingus:
@@ -28,11 +52,12 @@ class Dingus:
             for dy in xrange(3)
             for dz in xrange(3)
             ]
-        self.placements = [
-            cubes
+        placements = sorted(
+            sorted(cubes)
             for cubes in placements
             if cubes is not None
-            ]
+            )
+        self.placements = list(nodups(placements))
 
 
 def main():
