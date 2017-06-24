@@ -4,8 +4,8 @@ import os
 import sys
 import multiprocessing
 
-threads = multiprocessing.cpu_count()
-
+#threads = multiprocessing.cpu_count()
+threads = None
 
 SPACES = [
     (x,y,z)
@@ -59,6 +59,13 @@ class Dingus:
             )
         self.placements = list(nodups(placements))
 
+        # A map of placements based on their "lowest" cube:
+        self.fillers = {}
+        for space in SPACES:
+            self.fillers[space] = []
+        for placement in placements:
+            self.fillers[placement[0]].append(placement)
+
 
 def main():
     dingusL = Dingus([(0,0,0), (1,0,0), (2,0,0), (2,1,0)])
@@ -76,32 +83,47 @@ def main():
             if pid:
                 pids.append(pid)
             else:
-                turn_the_crank(universe, dingi, j, threads)
+                fill(universe, dingi, j, threads)
                 return
 
         for pid in pids:
             os.waitpid(pid, 0)
 
     else:
-        turn_the_crank(universe, dingi, 0, 1)
+        fill(universe, dingi, 0, 1)
 
 
-def turn_the_crank(universe, dingi, thread, threads):
-    if not dingi:
+def fill(universe, dingi, thread, threads, to_fill=None):
+    """Try to fill universe.
+
+    Try to fill universe given that all spaces not in the `empty` list have
+    already been filled."""
+
+    if to_fill is None:
+        to_fill = list(reversed(SPACES))
+    elif not to_fill:
         print 'We win!'
         print_universe(universe)
         return True
 
-    for i in xrange(len(dingi[0].placements)):
-        if len(dingi) == 7 and i % threads != thread:
-            continue
-
-        if placeable(universe, dingi[0].placements[i]):
-            place_cubes(universe, dingi[0].placements[i], 8 - len(dingi))
-            turn_the_crank(universe, dingi[1:], thread, threads)
-            place_cubes(universe, dingi[0].placements[i], 0)
-
-    return False
+    space = to_fill.pop()
+    if universe[space[0]][space[1]][space[2]] != 0:
+        # Space is already filled; continue to the next space:
+        fill(universe, dingi, thread, threads, to_fill)
+    else:
+        # Find a dingus that can fill space. We only need to look
+        # among dingus.fillers[space] because any other positions of a
+        # dingus would protrude into the spaces that we have already
+        # filled.
+        for i in range(len(dingi)):
+            dingus = dingi.pop(i)
+            for placement in dingus.fillers[space]:
+                if placeable(universe, placement):
+                    place_cubes(universe, placement, 8 - len(dingi))
+                    fill(universe, dingi, thread, threads, to_fill)
+                    place_cubes(universe, placement, 0)
+            dingi.insert(i, dingus)
+    to_fill.append(space)
 
 
 def rotate_xy(cubes, rotnum):
