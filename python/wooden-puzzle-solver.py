@@ -21,6 +21,18 @@ class Dingus:
             for m in xrange(6)
             for n in xrange(4)
             ]
+        placements = [
+            translate(rotation, [dx, dy, dz])
+            for rotation in self.rotations
+            for dx in xrange(3)
+            for dy in xrange(3)
+            for dz in xrange(3)
+            ]
+        self.placements = [
+            cubes
+            for cubes in placements
+            if cubes is not None
+            ]
 
 
 def main():
@@ -55,20 +67,14 @@ def turn_the_crank(universe, dingi, thread, threads):
         print_universe(universe)
         return True
 
-    for x in xrange(3):
-        for y in xrange(3):
-            for z in xrange(3):
-                if universe[x][y][z] != 0:
-                    continue
+    for i in xrange(len(dingi[0].placements)):
+        if len(dingi) == 7 and i % threads != thread:
+            continue
 
-                for i in xrange(len(dingi[0].rotations)):
-                    if len(dingi) == 7 and i % threads != thread:
-                        continue
-
-                    olduniverse = copy.deepcopy(universe)
-                    if place_cubes(universe, dingi[0].rotations[i], [x,y,z], 8 - len(dingi)):
-                        turn_the_crank(copy.deepcopy(universe), dingi[1:], thread, threads)
-                    universe = olduniverse
+        olduniverse = copy.deepcopy(universe)
+        if place_cubes(universe, dingi[0].placements[i], 8 - len(dingi)):
+            turn_the_crank(copy.deepcopy(universe), dingi[1:], thread, threads)
+        universe = olduniverse
 
     return False
 
@@ -110,11 +116,7 @@ def translate(cubes, origin):
     return newcubes
 
 
-def place_cubes(universe, cubes, origin, dingnum):
-    cubes = translate(cubes, origin)
-    if not cubes:
-        return False
-
+def place_cubes(universe, cubes, dingnum):
     for cube in cubes:
         if universe[cube[0]][cube[1]][cube[2]] != 0:
             return False
