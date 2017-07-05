@@ -43,14 +43,20 @@ class Dingus:
         self.cubes = cubes
 
         if rotate:
-            self.rotations = [
+            rotations = (
                 rotate_z(rotate_xy(self.cubes, n), m)
                 for m in xrange(6)
                 for n in xrange(4)
-            ]
+            )
+            rotations = (sorted(cubes) for cubes in rotations)
+            rotations = (
+                translate(cubes, (-cubes[0][0], -cubes[0][1], -cubes[0][2]))
+                for cubes in rotations
+            )
+            self.rotations = list(nodups(sorted(rotations)))
             sys.stderr.write("Dingus %s: found %d rotations\n" % (self.name, len(self.rotations),))
         else:
-            self.rotations = [self.cubes]
+            self.rotations = [sorted(self.cubes)]
             sys.stderr.write("Dingus %s: ignoring rotations\n" % (self.name,))
 
         placements = [
