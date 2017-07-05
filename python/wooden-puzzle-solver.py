@@ -120,7 +120,7 @@ def fill(universe, dingi, thread, threads, to_fill=None):
     elif not to_fill:
         print 'We win!'
         print_universe(universe)
-        return True
+        return
 
     space = to_fill.pop()
     if universe[space[0]][space[1]][space[2]] != 0:
