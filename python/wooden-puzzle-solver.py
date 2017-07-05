@@ -63,7 +63,7 @@ class Dingus:
         placements = sorted(
             sorted(cubes)
             for cubes in placements
-            if cubes is not None
+            if valid(cubes)
             )
         self.placements = list(nodups(placements))
 
@@ -165,13 +165,18 @@ def rotate_z(cubes, rotnum):
         return tuple((lambda cube: [cube[2], cube[1], -cube[0]])(cube) for cube in cubes)
 
 
+def valid(cubes):
+    for cube in cubes:
+        if not all(0 <= coord < 3 for coord in cube):
+            return False
+
+    return True
+
+
 def translate(cubes, origin):
     newcubes = []
     for cube in cubes:
-        newcube = tuple(cube[i] + origin[i] for i in xrange(len(cube)))
-        if not all(0 <= coord < 3 for coord in newcube):
-            return None
-        newcubes.append(newcube)
+        newcubes.append(tuple(cube[i] + origin[i] for i in xrange(len(cube))))
 
     return newcubes
 
