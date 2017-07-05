@@ -118,7 +118,6 @@ def fill(universe, dingi, thread, threads, to_fill=None):
     if to_fill is None:
         to_fill = list(reversed(SPACES))
     elif not to_fill:
-        print 'We win!'
         print_universe(universe)
         return
 
@@ -137,7 +136,7 @@ def fill(universe, dingi, thread, threads, to_fill=None):
             if dingus != last:
                 for placement in dingus.fillers[space]:
                     if placeable(universe, placement):
-                        place_cubes(universe, placement, 8 - len(dingi))
+                        place_cubes(universe, placement, 7 - len(dingi))
                         fill(universe, dingi, thread, threads, to_fill)
                         place_cubes(universe, placement, 0)
                 last = dingus
@@ -201,12 +200,14 @@ def place_cubes(universe, cubes, dingnum):
 
 
 def print_universe(universe):
-    for z in xrange(2,-1,-1):
-        for y in xrange(2,-1,-1):
-            for x in xrange(3):
+    for y in xrange(3):
+        for x in xrange(3):
+            if x != 0:
+                print '   ',
+            for z in xrange(3):
                 print universe[x][y][z],
-            print
         print
+    print
 
 
 if __name__ == '__main__':
