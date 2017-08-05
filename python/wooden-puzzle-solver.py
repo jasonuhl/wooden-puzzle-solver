@@ -43,14 +43,20 @@ class Dingus:
         self.cubes = cubes
 
         if rotate:
-            self.rotations = [
+            rotations = (
                 rotate_z(rotate_xy(self.cubes, n), m)
                 for m in xrange(6)
                 for n in xrange(4)
-            ]
+            )
+            rotations = (sorted(cubes) for cubes in rotations)
+            rotations = (
+                translate(cubes, (-cubes[0][0], -cubes[0][1], -cubes[0][2]))
+                for cubes in rotations
+            )
+            self.rotations = list(nodups(sorted(rotations)))
             sys.stderr.write("Dingus %s: found %d rotations\n" % (self.name, len(self.rotations),))
         else:
-            self.rotations = [self.cubes]
+            self.rotations = [sorted(self.cubes)]
             sys.stderr.write("Dingus %s: ignoring rotations\n" % (self.name,))
 
         placements = [
@@ -63,7 +69,7 @@ class Dingus:
         placements = sorted(
             sorted(cubes)
             for cubes in placements
-            if cubes is not None
+            if valid(cubes)
             )
         self.placements = list(nodups(placements))
 
@@ -112,9 +118,8 @@ def fill(universe, dingi, thread, threads, to_fill=None):
     if to_fill is None:
         to_fill = list(reversed(SPACES))
     elif not to_fill:
-        print 'We win!'
         print_universe(universe)
-        return True
+        return
 
     space = to_fill.pop()
     if universe[space[0]][space[1]][space[2]] != 0:
@@ -131,7 +136,7 @@ def fill(universe, dingi, thread, threads, to_fill=None):
             if dingus != last:
                 for placement in dingus.fillers[space]:
                     if placeable(universe, placement):
-                        place_cubes(universe, placement, 8 - len(dingi))
+                        place_cubes(universe, placement, 7 - len(dingi))
                         fill(universe, dingi, thread, threads, to_fill)
                         place_cubes(universe, placement, 0)
                 last = dingus
@@ -165,13 +170,18 @@ def rotate_z(cubes, rotnum):
         return tuple((lambda cube: [cube[2], cube[1], -cube[0]])(cube) for cube in cubes)
 
 
+def valid(cubes):
+    for cube in cubes:
+        if not all(0 <= coord < 3 for coord in cube):
+            return False
+
+    return True
+
+
 def translate(cubes, origin):
     newcubes = []
     for cube in cubes:
-        newcube = tuple(cube[i] + origin[i] for i in xrange(len(cube)))
-        if not all(0 <= coord < 3 for coord in newcube):
-            return None
-        newcubes.append(newcube)
+        newcubes.append(tuple(cube[i] + origin[i] for i in xrange(len(cube))))
 
     return newcubes
 
@@ -190,12 +200,14 @@ def place_cubes(universe, cubes, dingnum):
 
 
 def print_universe(universe):
-    for z in xrange(2,-1,-1):
-        for y in xrange(2,-1,-1):
-            for x in xrange(3):
+    for y in xrange(3):
+        for x in xrange(3):
+            if x != 0:
+                print '   ',
+            for z in xrange(3):
                 print universe[x][y][z],
-            print
         print
+    print
 
 
 if __name__ == '__main__':
