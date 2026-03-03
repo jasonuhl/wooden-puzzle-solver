@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Puzzle Visualization</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <div class="puzzle-page">
+      <h1>Puzzle Visualization</h1>
+
+      <p id="solver-status" class="solver-status">Loading puzzle solver…</p>
+
+      <div class="solution-nav">
+        <button id="next-solution" class="solution-button" type="button" disabled>Next solution</button>
+      </div>
+
+      <div class="autoplay-controls">
+        <label for="autoplay-speed">Auto speed (<span id="autoplay-speed-value">50</span>)</label>
+        <input id="autoplay-speed" type="range" min="0" max="100" step="1" value="50">
+      </div>
+
+      <div class="controls">
+        <label for="rotate-x">Rotate X</label>
+        <input id="rotate-x" type="range" min="-90" max="90" value="-25">
+
+        <label for="rotate-y">Rotate Y</label>
+        <input id="rotate-y" type="range" min="-180" max="180" value="35">
+      </div>
+
+      <div class="scene" id="puzzle-scene">
+        <div id="puzzle-grid" class="grid-3d"></div>
+      </div>
+
+      <div class="legend" id="puzzle-legend"></div>
+    </div>
+
+    <script type="module" src="./puzzle.js"></script>
+  </body>
+</html>
