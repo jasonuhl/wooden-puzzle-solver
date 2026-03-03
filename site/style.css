@@ -1,0 +1,111 @@
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.puzzle-page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.puzzle-page h1 {
+  margin: 0 0 16px;
+  font-size: 1.6rem;
+}
+
+.solver-status {
+  margin: 0 0 14px;
+  font-weight: 600;
+}
+
+.solution-nav {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.solution-button {
+  padding: 8px 12px;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.solution-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.autoplay-controls {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 14px;
+  align-items: center;
+  margin: 0 0 16px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 14px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.scene {
+  height: 460px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+  border: 1px solid #cbd5e1;
+  display: grid;
+  place-items: center;
+  perspective: 1000px;
+  margin-bottom: 16px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.scene.dragging {
+  cursor: grabbing;
+}
+
+.grid-3d {
+  position: relative;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+}
+
+.cube {
+  position: absolute;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.22), 0 8px 20px rgba(15, 23, 42, 0.18);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.legend-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: inline-block;
+  border: 1px solid rgba(15, 23, 42, 0.25);
+}

@@ -7,6 +7,17 @@ McCutcheon.
 The Python implementation came first.  Now there's a Rust
 implementation too!
 
+## Visualization
+
+A browser-based visualization is available.  This uses the Rust
+implementation, compiled to WebAssembly.  Run:
+
+```
+make && scripts/serve-site.sh
+```
+
+and then open `http://127.0.0.1:8000/` in your browser.
+
 ## License
 
 This program is free software; you can redistribute it and/or modify

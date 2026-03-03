@@ -1,1 +1,5 @@
+**/__pycache__/
+*.py[cod]
+go/wooden-puzzle-solver
 rust/wooden-puzzle-solver/target
+site/wasm/
