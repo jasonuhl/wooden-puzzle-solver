@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import copy
 import os
 import sys
@@ -16,18 +16,18 @@ SPACES = [
 
 
 def instantiate_universe():
-    x = [0 for n in xrange(3)]
-    y = [copy.deepcopy(x) for n in xrange(3)]
-    return [copy.deepcopy(y) for n in xrange(3)]
+    x = [0 for n in range(3)]
+    y = [copy.deepcopy(x) for n in range(3)]
+    return [copy.deepcopy(y) for n in range(3)]
 
 
 def nodups(items):
     items = iter(items)
     try:
-        last = items.next()
+        last = next(items)
         yield last
         while True:
-            item = items.next()
+            item = next(items)
             if item == last:
                 continue
             else:
@@ -45,8 +45,8 @@ class Dingus:
         if rotate:
             rotations = (
                 rotate_z(rotate_xy(self.cubes, n), m)
-                for m in xrange(6)
-                for n in xrange(4)
+                for m in range(6)
+                for n in range(4)
             )
             rotations = (sorted(cubes) for cubes in rotations)
             rotations = (
@@ -62,9 +62,9 @@ class Dingus:
         placements = [
             translate(rotation, (dx, dy, dz))
             for rotation in self.rotations
-            for dx in xrange(3)
-            for dy in xrange(3)
-            for dz in xrange(3)
+            for dx in range(3)
+            for dy in range(3)
+            for dz in range(3)
             ]
         placements = sorted(
             sorted(cubes)
@@ -94,7 +94,7 @@ def main():
 
     if threads:
         pids = []
-        for j in xrange(threads):
+        for j in range(threads):
             pid = os.fork()
             if pid:
                 pids.append(pid)
@@ -181,7 +181,7 @@ def valid(cubes):
 def translate(cubes, origin):
     newcubes = []
     for cube in cubes:
-        newcubes.append(tuple(cube[i] + origin[i] for i in xrange(len(cube))))
+        newcubes.append(tuple(cube[i] + origin[i] for i in range(len(cube))))
 
     return newcubes
 
@@ -200,14 +200,14 @@ def place_cubes(universe, cubes, dingnum):
 
 
 def print_universe(universe):
-    for y in xrange(3):
-        for x in xrange(3):
+    for y in range(3):
+        for x in range(3):
             if x != 0:
-                print '   ',
-            for z in xrange(3):
-                print universe[x][y][z],
-        print
-    print
+                print('   ', end='')
+            for z in range(3):
+                print(universe[x][y][z], end=' ')
+        print()
+    print()
 
 
 if __name__ == '__main__':
