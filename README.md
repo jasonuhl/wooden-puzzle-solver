@@ -18,6 +18,8 @@ make && scripts/serve-site.sh
 
 and then open `http://127.0.0.1:8000/` in your browser.
 
+The visualization is also available as [a GitHub Pages site](https://jasonuhl.github.io/wooden-puzzle-solver/).
+
 ## License
 
 This program is free software; you can redistribute it and/or modify
