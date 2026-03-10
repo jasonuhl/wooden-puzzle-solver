@@ -73,6 +73,58 @@ func TestFitsPlaceAndUnplace(t *testing.T) {
 	}
 }
 
+func TestSolverProduces415CanonicalSolutions(t *testing.T) {
+	var world World
+	DingusL := NewDingus(&world, "L", true, CubeList{{0, 0, 0}, {1, 0, 0}, {2, 0, 0}, {2, 1, 0}})
+	DingusT := NewDingus(&world, "T", true, CubeList{{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {2, 0, 0}})
+	DingusS := NewDingus(&world, "S", false, CubeList{{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {2, 1, 0}})
+	DingusR := NewDingus(&world, "R", true, CubeList{{0, 0, 0}, {0, 1, 0}, {1, 1, 0}})
+	Dingi := []*Dingus{&DingusL, &DingusL, &DingusL, &DingusL, &DingusT, &DingusS, &DingusR}
+
+	solutions := make(chan World)
+	go func() {
+		world.Fill(Dingi, AllPositions, '1', solutions)
+		close(solutions)
+	}()
+
+	var count int
+	for w := range solutions {
+		if !w.IsCanonical() {
+			continue
+		}
+		// Validate every cell is filled with piece number '1'..'7'
+		for x := 0; x < 3; x++ {
+			for y := 0; y < 3; y++ {
+				for z := 0; z < 3; z++ {
+					v := w[x][y][z]
+					if v < '1' || v > '7' {
+						t.Fatalf("solution %d: unexpected value %c at (%d,%d,%d)", count, v, x, y, z)
+					}
+				}
+			}
+		}
+		// Validate all 7 pieces present
+		var present [8]bool
+		for x := 0; x < 3; x++ {
+			for y := 0; y < 3; y++ {
+				for z := 0; z < 3; z++ {
+					present[w[x][y][z]-'0'] = true
+				}
+			}
+		}
+		for p := 1; p <= 7; p++ {
+			if !present[p] {
+				t.Fatalf("solution %d: missing piece %d", count, p)
+			}
+		}
+		count++
+	}
+
+	if count != 415 {
+		t.Fatalf("expected 415 canonical solutions, got %d", count)
+	}
+}
+
 func TestWorldPrintIncludesExpectedCharacters(t *testing.T) {
 	var w World
 	w.Place(CubeList{{0, 0, 0}}, '1')

@@ -349,6 +349,61 @@ func (w *World) Print(f *bufio.Writer) {
 	f.WriteByte('\n')
 }
 
+func (w *World) Key() [27]byte {
+	var key [27]byte
+	var index int
+	for z := 0; z < 3; z++ {
+		for y := 0; y < 3; y++ {
+			for x := 0; x < 3; x++ {
+				key[index] = w[x][y][z]
+				index++
+			}
+		}
+	}
+	return key
+}
+
+func (w *World) RotateWorld(xyRot, zRot CubeRotation) World {
+	var rotated World
+	for x := 0; x < 3; x++ {
+		for y := 0; y < 3; y++ {
+			for z := 0; z < 3; z++ {
+				c := Cube{Coord(x) - 1, Coord(y) - 1, Coord(z) - 1}
+				rc := xyRot(c)
+				rc = zRot(rc)
+				rx, ry, rz := int(rc.x)+1, int(rc.y)+1, int(rc.z)+1
+				rotated[rx][ry][rz] = w[x][y][z]
+			}
+		}
+	}
+	return rotated
+}
+
+func keyLess(a, b [27]byte) bool {
+	for i := range a {
+		if a[i] != b[i] {
+			return a[i] < b[i]
+		}
+	}
+	return false
+}
+
+func (w *World) IsCanonical() bool {
+	canonicalKey := w.Key()
+	for i, zRot := range ZRotations {
+		for j, xyRot := range XYRotations {
+			if i == 0 && j == 0 {
+				continue // skip identity
+			}
+			rotated := w.RotateWorld(xyRot, zRot)
+			if keyLess(rotated.Key(), canonicalKey) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func (w *World) Fill(dingi []*Dingus, toFill []Position, c byte, solutions chan<- World) {
 	// Find the next position that needs filling:
 	var p Position
@@ -403,8 +458,10 @@ func main() {
 	var count int
 	f := bufio.NewWriter(os.Stdout)
 	for w := range solutions {
-		w.Print(f)
-		count++
+		if w.IsCanonical() {
+			w.Print(f)
+			count++
+		}
 	}
 	f.Flush()
 	fmt.Fprintf(os.Stderr, "Found %d solutions\n", count)
