@@ -13,5 +13,8 @@ pub fn next_solution() -> String {
     let mut guard = SOLVER_STATE.lock().unwrap();
 
     let iter = guard.get_or_insert_with(SolverIterator::new);
-    iter.next().unwrap_or_default()
+    match iter.next() {
+        Some(s) => format!("We win!\n{}", s),
+        None => String::new(),
+    }
 }

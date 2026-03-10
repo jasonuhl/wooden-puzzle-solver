@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(Clone, Copy)]
 struct Dingus {
     points: &'static [Point],
@@ -5,33 +7,12 @@ struct Dingus {
 
 #[derive(Clone)]
 struct Piece {
-    orientations: Vec<Vec<Point>>,
+    fillers: HashMap<[usize; 3], Vec<Vec<[usize; 3]>>>,
+    kind: usize,
 }
 
 type Point = [i32; 3];
 type Universe = [[[i32; 3]; 3]; 3];
-
-fn place_dingus(
-    universe: &mut Universe,
-    points: &[Point],
-    origin: Point,
-    dingnum: i32,
-) -> bool {
-    for point in points {
-        let x = (point[0] + origin[0]) as usize;
-        let y = (point[1] + origin[1]) as usize;
-        let z = (point[2] + origin[2]) as usize;
-
-        if x >= 3 || y >= 3 || z >= 3 {
-            return false;
-        }
-        if universe[x][y][z] != 0 {
-            return false;
-        }
-        universe[x][y][z] = dingnum;
-    }
-    true
-}
 
 fn rotate_xy(x: i32, y: i32, rotnum: i32) -> (i32, i32) {
     match rotnum {
@@ -59,18 +40,6 @@ fn rotate_point(point: Point, xy_rotnum: i32, z_rotnum: i32) -> Point {
     let (x, y) = rotate_xy(point[0], point[1], xy_rotnum);
     let (x, y, z) = rotate_z(x, y, point[2], z_rotnum);
     [x, y, z]
-}
-
-fn normalize_points(points: &mut [Point]) {
-    let min_x = points.iter().map(|point| point[0]).min().unwrap_or(0);
-    let min_y = points.iter().map(|point| point[1]).min().unwrap_or(0);
-    let min_z = points.iter().map(|point| point[2]).min().unwrap_or(0);
-
-    for point in points.iter_mut() {
-        point[0] -= min_x;
-        point[1] -= min_y;
-        point[2] -= min_z;
-    }
 }
 
 fn rotate_universe(universe: &Universe, xy_rotnum: i32, z_rotnum: i32) -> Universe {
@@ -127,49 +96,125 @@ fn is_canonical_under_cube_rotations(universe: &Universe) -> bool {
     true
 }
 
-fn build_piece(dingus: &Dingus) -> Piece {
+fn build_piece(dingus: &Dingus, rotate: bool, kind: usize, name: &str) -> Piece {
     let mut orientations: Vec<Vec<Point>> = Vec::new();
 
-    for z_rotnum in 0..6 {
-        for xy_rotnum in 0..4 {
-            let mut rotated = dingus
-                .points
-                .iter()
-                .map(|point| rotate_point(*point, xy_rotnum, z_rotnum))
-                .collect::<Vec<Point>>();
+    if rotate {
+        for z_rotnum in 0..6 {
+            for xy_rotnum in 0..4 {
+                let mut rotated: Vec<Point> = dingus
+                    .points
+                    .iter()
+                    .map(|point| rotate_point(*point, xy_rotnum, z_rotnum))
+                    .collect();
 
-            normalize_points(&mut rotated);
-            rotated.sort();
+                rotated.sort();
+                let base = rotated[0];
+                for p in rotated.iter_mut() {
+                    p[0] -= base[0];
+                    p[1] -= base[1];
+                    p[2] -= base[2];
+                }
 
-            if !orientations.contains(&rotated) {
-                orientations.push(rotated);
+                if !orientations.contains(&rotated) {
+                    orientations.push(rotated);
+                }
+            }
+        }
+        eprintln!("Dingus {}: found {} rotations", name, orientations.len());
+    } else {
+        let mut sorted = dingus.points.to_vec();
+        sorted.sort();
+        orientations.push(sorted);
+        eprintln!("Dingus {}: ignoring rotations", name);
+    }
+
+    // Generate all valid placements
+    let mut all_placements: Vec<Vec<[usize; 3]>> = Vec::new();
+
+    for orientation in &orientations {
+        for dx in 0..3i32 {
+            for dy in 0..3i32 {
+                for dz in 0..3i32 {
+                    let translated: Vec<[i32; 3]> = orientation
+                        .iter()
+                        .map(|p| [p[0] + dx, p[1] + dy, p[2] + dz])
+                        .collect();
+
+                    if translated
+                        .iter()
+                        .all(|p| (0..3).contains(&p[0]) && (0..3).contains(&p[1]) && (0..3).contains(&p[2]))
+                    {
+                        let mut placement: Vec<[usize; 3]> = translated
+                            .iter()
+                            .map(|p| [p[0] as usize, p[1] as usize, p[2] as usize])
+                            .collect();
+                        placement.sort();
+                        all_placements.push(placement);
+                    }
+                }
             }
         }
     }
 
-    Piece { orientations }
+    all_placements.sort();
+    all_placements.dedup();
+    eprintln!("          found {} placements", all_placements.len());
+
+    // Build fillers map: group placements by their lowest cube (first after sorting)
+    let mut fillers: HashMap<[usize; 3], Vec<Vec<[usize; 3]>>> = HashMap::new();
+    for x in 0..3 {
+        for y in 0..3 {
+            for z in 0..3 {
+                fillers.insert([x, y, z], Vec::new());
+            }
+        }
+    }
+
+    for placement in &all_placements {
+        fillers.get_mut(&placement[0]).unwrap().push(placement.clone());
+    }
+
+    Piece { fillers, kind }
+}
+
+fn find_first_empty(universe: &Universe) -> Option<[usize; 3]> {
+    for x in 0..3 {
+        for y in 0..3 {
+            for z in 0..3 {
+                if universe[x][y][z] == 0 {
+                    return Some([x, y, z]);
+                }
+            }
+        }
+    }
+    None
 }
 
 fn format_universe(universe: &Universe) -> String {
     let mut output = String::new();
 
-    for z in (0..3).rev() {
-        for y in (0..3).rev() {
-            output.push_str(&format!(
-                "{} {} {}\n",
-                universe[0][y][z], universe[1][y][z], universe[2][y][z]
-            ));
+    for y in 0..3 {
+        for x in 0..3 {
+            if x != 0 {
+                output.push_str("     ");
+            }
+            for z in 0..3 {
+                output.push_str(&universe[x][y][z].to_string());
+                if z != 2 {
+                    output.push(' ');
+                }
+            }
         }
         output.push('\n');
     }
+    output.push('\n');
 
     output
 }
 
 fn solution_block(universe: &Universe) -> String {
-    let mut output = String::from("We win!\n");
-    output.push_str(&format_universe(universe));
-    output
+    format_universe(universe)
 }
 
 fn make_pieces() -> Vec<Piece> {
@@ -186,25 +231,29 @@ fn make_pieces() -> Vec<Piece> {
         points: &[[0, 0, 0], [0, 1, 0], [1, 1, 0]],
     };
 
-    let base_dingi = [
-        dingus_l, dingus_l, dingus_l, dingus_l, dingus_t, dingus_s, dingus_r,
-    ];
+    let piece_l = build_piece(&dingus_l, true, 0, "L");
+    let piece_t = build_piece(&dingus_t, true, 1, "T");
+    let piece_s = build_piece(&dingus_s, false, 2, "S");
+    let piece_r = build_piece(&dingus_r, true, 3, "R");
 
-    for dingus in base_dingi.iter() {
-        assert_eq!(dingus.points[0], [0, 0, 0]);
-    }
-
-    base_dingi.iter().map(build_piece).collect()
+    vec![
+        piece_l.clone(),
+        piece_l.clone(),
+        piece_l.clone(),
+        piece_l,
+        piece_t,
+        piece_s,
+        piece_r,
+    ]
 }
 
 struct Frame {
     universe: Universe,
-    piece_index: usize,
-    dingnum: i32,
-    x: usize,
-    y: usize,
-    z: usize,
-    orientation_index: usize,
+    remaining_pieces: Vec<usize>,
+    cell: [usize; 3],
+    piece_iter_index: usize,
+    placement_index: usize,
+    last_kind: Option<usize>,
 }
 
 pub struct SolverIterator {
@@ -215,17 +264,26 @@ pub struct SolverIterator {
 impl SolverIterator {
     pub fn new() -> Self {
         let pieces = make_pieces();
+        let remaining: Vec<usize> = (0..pieces.len()).collect();
         let stack = vec![Frame {
             universe: [[[0; 3]; 3]; 3],
-            piece_index: 0,
-            dingnum: 1,
-            x: 0,
-            y: 0,
-            z: 0,
-            orientation_index: 0,
+            remaining_pieces: remaining,
+            cell: [0, 0, 0],
+            piece_iter_index: 0,
+            placement_index: 0,
+            last_kind: None,
         }];
         SolverIterator { pieces, stack }
     }
+}
+
+enum SearchResult {
+    Solution(Universe),
+    Recurse {
+        universe: Universe,
+        remaining_pieces: Vec<usize>,
+        cell: [usize; 3],
+    },
 }
 
 impl Iterator for SolverIterator {
@@ -234,77 +292,93 @@ impl Iterator for SolverIterator {
     fn next(&mut self) -> Option<String> {
         loop {
             let frame = self.stack.last()?;
-
-            let piece_index = frame.piece_index;
-            let dingnum = frame.dingnum;
             let universe = frame.universe;
-            let num_orientations = self.pieces[piece_index].orientations.len();
-            let is_last = piece_index == self.pieces.len() - 1;
-            let mut x = frame.x;
-            let mut y = frame.y;
-            let mut z = frame.z;
-            let mut oi = frame.orientation_index;
+            let cell = frame.cell;
+            let remaining_pieces = frame.remaining_pieces.clone();
+            let mut pi = frame.piece_iter_index;
+            let mut pli = frame.placement_index;
+            let mut last_kind = frame.last_kind;
 
-            let mut found = None;
+            let mut result = None;
 
-            'outer: while x < 3 {
-                while y < 3 {
-                    while z < 3 {
-                        if universe[x][y][z] == 0 {
-                            while oi < num_orientations {
-                                let orientation = &self.pieces[piece_index].orientations[oi];
-                                let origin = [x as i32, y as i32, z as i32];
-                                let mut new_universe = universe;
-                                if place_dingus(&mut new_universe, orientation, origin, dingnum) {
-                                    if is_last {
-                                        if is_canonical_under_cube_rotations(&new_universe) {
-                                            oi += 1;
-                                            found = Some((new_universe, true));
-                                            break 'outer;
-                                        }
-                                    } else {
-                                        oi += 1;
-                                        found = Some((new_universe, false));
-                                        break 'outer;
+            'search: while pi < remaining_pieces.len() {
+                let piece_idx = remaining_pieces[pi];
+                let kind = self.pieces[piece_idx].kind;
+
+                if last_kind == Some(kind) {
+                    pi += 1;
+                    pli = 0;
+                    continue;
+                }
+
+                if let Some(placements) = self.pieces[piece_idx].fillers.get(&cell) {
+                    while pli < placements.len() {
+                        let placement = &placements[pli];
+                        pli += 1;
+
+                        if placement
+                            .iter()
+                            .all(|p| universe[p[0]][p[1]][p[2]] == 0)
+                        {
+                            let dingnum = self.stack.len() as i32;
+                            let mut new_universe = universe;
+                            for p in placement {
+                                new_universe[p[0]][p[1]][p[2]] = dingnum;
+                            }
+
+                            match find_first_empty(&new_universe) {
+                                None => {
+                                    if is_canonical_under_cube_rotations(&new_universe) {
+                                        result = Some(SearchResult::Solution(new_universe));
+                                        break 'search;
                                     }
                                 }
-                                oi += 1;
+                                Some(next_cell) => {
+                                    let mut new_remaining = remaining_pieces.clone();
+                                    new_remaining.remove(pi);
+                                    result = Some(SearchResult::Recurse {
+                                        universe: new_universe,
+                                        remaining_pieces: new_remaining,
+                                        cell: next_cell,
+                                    });
+                                    break 'search;
+                                }
                             }
                         }
-                        z += 1;
-                        oi = 0;
                     }
-                    y += 1;
-                    z = 0;
-                    oi = 0;
                 }
-                x += 1;
-                y = 0;
-                z = 0;
-                oi = 0;
+
+                last_kind = Some(kind);
+                pi += 1;
+                pli = 0;
             }
 
-            match found {
-                Some((new_universe, is_solution)) => {
+            match result {
+                Some(SearchResult::Solution(u)) => {
                     let frame = self.stack.last_mut().unwrap();
-                    frame.x = x;
-                    frame.y = y;
-                    frame.z = z;
-                    frame.orientation_index = oi;
+                    frame.piece_iter_index = pi;
+                    frame.placement_index = pli;
+                    frame.last_kind = last_kind;
+                    return Some(solution_block(&u));
+                }
+                Some(SearchResult::Recurse {
+                    universe,
+                    remaining_pieces,
+                    cell,
+                }) => {
+                    let frame = self.stack.last_mut().unwrap();
+                    frame.piece_iter_index = pi;
+                    frame.placement_index = pli;
+                    frame.last_kind = last_kind;
 
-                    if is_solution {
-                        return Some(solution_block(&new_universe));
-                    } else {
-                        self.stack.push(Frame {
-                            universe: new_universe,
-                            piece_index: piece_index + 1,
-                            dingnum: dingnum + 1,
-                            x: 0,
-                            y: 0,
-                            z: 0,
-                            orientation_index: 0,
-                        });
-                    }
+                    self.stack.push(Frame {
+                        universe,
+                        remaining_pieces,
+                        cell,
+                        piece_iter_index: 0,
+                        placement_index: 0,
+                        last_kind: None,
+                    });
                 }
                 None => {
                     self.stack.pop();
@@ -315,9 +389,12 @@ impl Iterator for SolverIterator {
 }
 
 pub fn stream_solutions<F: FnMut(String)>(mut on_solution_text: F) {
+    let mut count = 0;
     for solution in SolverIterator::new() {
         on_solution_text(solution);
+        count += 1;
     }
+    eprintln!("Found {} solutions", count);
 }
 
 #[cfg(test)]
@@ -335,29 +412,104 @@ mod tests {
     }
 
     #[test]
-    fn normalize_points_shifts_min_corner_to_origin() {
-        let mut points = vec![[2, 3, 1], [4, 5, 2], [3, 3, 4]];
-        normalize_points(&mut points);
-        points.sort();
-
-        assert_eq!(points[0], [0, 0, 0]);
-        assert!(points.iter().all(|point| point[0] >= 0 && point[1] >= 0 && point[2] >= 0));
-    }
-
-    #[test]
-    fn build_piece_deduplicates_equivalent_orientations() {
+    fn build_piece_generates_correct_fillers() {
         let line = Dingus {
             points: &[[0, 0, 0], [1, 0, 0], [2, 0, 0]],
         };
 
-        let piece = build_piece(&line);
-        assert_eq!(piece.orientations.len(), 3);
+        let piece = build_piece(&line, true, 0, "test");
+
+        // A 3-cube line has 3 orientations (along x, y, z axes)
+        // Each orientation fits in exactly 9 positions (3 translations along
+        // the non-line axes), so 3 * 9 = 27 total placements
+        let total_placements: usize = piece.fillers.values().map(|v| v.len()).sum();
+        assert_eq!(total_placements, 27);
+    }
+
+    #[test]
+    fn s_piece_has_no_rotations() {
+        let dingus_s = Dingus {
+            points: &[[0, 0, 0], [1, 0, 0], [1, 1, 0], [2, 1, 0]],
+        };
+
+        let piece_no_rotate = build_piece(&dingus_s, false, 0, "S");
+        let piece_rotate = build_piece(&dingus_s, true, 0, "S");
+
+        let no_rotate_placements: usize = piece_no_rotate.fillers.values().map(|v| v.len()).sum();
+        let rotate_placements: usize = piece_rotate.fillers.values().map(|v| v.len()).sum();
+
+        // Without rotation, should have fewer placements than with rotation
+        assert!(no_rotate_placements < rotate_placements);
+        // The S-piece without rotation: 3x2x1 shape, valid translations give 6 placements
+        assert_eq!(no_rotate_placements, 6);
     }
 
     #[test]
     fn solver_iterator_returns_nonempty() {
         let mut iter = SolverIterator::new();
         let first = iter.next().expect("expected at least one solution");
-        assert!(first.starts_with("We win!\n"));
+        assert!(!first.is_empty());
+    }
+
+    fn parse_universe(solution: &str) -> Universe {
+        let lines: Vec<&str> = solution.lines().collect();
+        let mut universe: Universe = [[[0; 3]; 3]; 3];
+        for y in 0..3 {
+            let nums: Vec<i32> = lines[y]
+                .split_whitespace()
+                .map(|s| s.parse().unwrap())
+                .collect();
+            for x in 0..3 {
+                for z in 0..3 {
+                    universe[x][y][z] = nums[x * 3 + z];
+                }
+            }
+        }
+        universe
+    }
+
+    #[test]
+    fn solver_produces_415_canonical_complete_solutions() {
+        let solutions: Vec<String> = SolverIterator::new().collect();
+
+        assert_eq!(solutions.len(), 415, "expected exactly 415 canonical solutions");
+
+        for (i, solution) in solutions.iter().enumerate() {
+            let universe = parse_universe(solution);
+
+            // Every cell must be filled (no zeros) with piece numbers 1..=7
+            for x in 0..3 {
+                for y in 0..3 {
+                    for z in 0..3 {
+                        let v = universe[x][y][z];
+                        assert!(
+                            (1..=7).contains(&v),
+                            "solution {} has unexpected value {} at ({},{},{})",
+                            i, v, x, y, z
+                        );
+                    }
+                }
+            }
+
+            // All 7 piece numbers (1-7) must be present
+            let mut piece_present = [false; 8];
+            for x in 0..3 {
+                for y in 0..3 {
+                    for z in 0..3 {
+                        piece_present[universe[x][y][z] as usize] = true;
+                    }
+                }
+            }
+            for p in 1..=7 {
+                assert!(piece_present[p], "solution {} missing piece {}", i, p);
+            }
+
+            // Must be canonical under cube rotations
+            assert!(
+                is_canonical_under_cube_rotations(&universe),
+                "solution {} is not canonical",
+                i
+            );
+        }
     }
 }

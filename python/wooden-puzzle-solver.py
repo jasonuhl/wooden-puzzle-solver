@@ -203,9 +203,12 @@ def print_universe(universe):
     for y in range(3):
         for x in range(3):
             if x != 0:
-                print('   ', end='')
+                print('     ', end='')
             for z in range(3):
-                print(universe[x][y][z], end=' ')
+                if z < 2:
+                    print(universe[x][y][z], end=' ')
+                else:
+                    print(universe[x][y][z], end='')
         print()
     print()
 
