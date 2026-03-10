@@ -21,28 +21,30 @@ function parseAllLayerSets(output) {
       continue;
     }
 
-    const rows = [];
+    // Collect the 3 data lines (one per y=0,1,2), each with 9 values
+    const dataLines = [];
     for (const line of lines.slice(index + 1)) {
-      if (line.length === 0) {
-        continue;
-      }
-
+      if (line.length === 0) continue;
       const values = line.split(/\s+/).map((token) => Number.parseInt(token, 10));
-      if (values.length !== 3 || values.some((value) => Number.isNaN(value))) {
-        continue;
-      }
-
-      rows.push(values);
-      if (rows.length === 9) {
-        break;
-      }
+      if (values.length !== 9 || values.some((value) => Number.isNaN(value))) break;
+      dataLines.push(values);
+      if (dataLines.length === 3) break;
     }
 
-    if (rows.length !== 9) {
-      continue;
+    if (dataLines.length !== 3) continue;
+
+    // dataLines[y][x*3+z] = universe[x][y][z]
+    // Build layers[layerIdx][rowIdx][col] where layerIdx→z=2,1,0 and rowIdx→y=2,1,0
+    const layers = [];
+    for (let z = 2; z >= 0; z--) {
+      const layerRows = [];
+      for (let y = 2; y >= 0; y--) {
+        layerRows.push([dataLines[y][z], dataLines[y][3 + z], dataLines[y][6 + z]]);
+      }
+      layers.push(layerRows);
     }
 
-    allLayerSets.push([rows.slice(0, 3), rows.slice(3, 6), rows.slice(6, 9)]);
+    allLayerSets.push(layers);
   }
 
   if (allLayerSets.length === 0) {

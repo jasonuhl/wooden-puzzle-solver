@@ -96,7 +96,7 @@ fn is_canonical_under_cube_rotations(universe: &Universe) -> bool {
     true
 }
 
-fn build_piece(dingus: &Dingus, rotate: bool, kind: usize) -> Piece {
+fn build_piece(dingus: &Dingus, rotate: bool, kind: usize, name: &str) -> Piece {
     let mut orientations: Vec<Vec<Point>> = Vec::new();
 
     if rotate {
@@ -121,10 +121,12 @@ fn build_piece(dingus: &Dingus, rotate: bool, kind: usize) -> Piece {
                 }
             }
         }
+        eprintln!("Dingus {}: found {} rotations", name, orientations.len());
     } else {
         let mut sorted = dingus.points.to_vec();
         sorted.sort();
         orientations.push(sorted);
+        eprintln!("Dingus {}: ignoring rotations", name);
     }
 
     // Generate all valid placements
@@ -157,6 +159,7 @@ fn build_piece(dingus: &Dingus, rotate: bool, kind: usize) -> Piece {
 
     all_placements.sort();
     all_placements.dedup();
+    eprintln!("          found {} placements", all_placements.len());
 
     // Build fillers map: group placements by their lowest cube (first after sorting)
     let mut fillers: HashMap<[usize; 3], Vec<Vec<[usize; 3]>>> = HashMap::new();
@@ -191,23 +194,27 @@ fn find_first_empty(universe: &Universe) -> Option<[usize; 3]> {
 fn format_universe(universe: &Universe) -> String {
     let mut output = String::new();
 
-    for z in (0..3).rev() {
-        for y in (0..3).rev() {
-            output.push_str(&format!(
-                "{} {} {}\n",
-                universe[0][y][z], universe[1][y][z], universe[2][y][z]
-            ));
+    for y in 0..3 {
+        for x in 0..3 {
+            if x != 0 {
+                output.push_str("     ");
+            }
+            for z in 0..3 {
+                output.push_str(&universe[x][y][z].to_string());
+                if z != 2 {
+                    output.push(' ');
+                }
+            }
         }
         output.push('\n');
     }
+    output.push('\n');
 
     output
 }
 
 fn solution_block(universe: &Universe) -> String {
-    let mut output = String::from("We win!\n");
-    output.push_str(&format_universe(universe));
-    output
+    format_universe(universe)
 }
 
 fn make_pieces() -> Vec<Piece> {
@@ -224,10 +231,10 @@ fn make_pieces() -> Vec<Piece> {
         points: &[[0, 0, 0], [0, 1, 0], [1, 1, 0]],
     };
 
-    let piece_l = build_piece(&dingus_l, true, 0);
-    let piece_t = build_piece(&dingus_t, true, 1);
-    let piece_s = build_piece(&dingus_s, false, 2);
-    let piece_r = build_piece(&dingus_r, true, 3);
+    let piece_l = build_piece(&dingus_l, true, 0, "L");
+    let piece_t = build_piece(&dingus_t, true, 1, "T");
+    let piece_s = build_piece(&dingus_s, false, 2, "S");
+    let piece_r = build_piece(&dingus_r, true, 3, "R");
 
     vec![
         piece_l.clone(),
@@ -382,9 +389,12 @@ impl Iterator for SolverIterator {
 }
 
 pub fn stream_solutions<F: FnMut(String)>(mut on_solution_text: F) {
+    let mut count = 0;
     for solution in SolverIterator::new() {
         on_solution_text(solution);
+        count += 1;
     }
+    eprintln!("Found {} solutions", count);
 }
 
 #[cfg(test)]
@@ -407,7 +417,7 @@ mod tests {
             points: &[[0, 0, 0], [1, 0, 0], [2, 0, 0]],
         };
 
-        let piece = build_piece(&line, true, 0);
+        let piece = build_piece(&line, true, 0, "test");
 
         // A 3-cube line has 3 orientations (along x, y, z axes)
         // Each orientation fits in exactly 9 positions (3 translations along
@@ -422,8 +432,8 @@ mod tests {
             points: &[[0, 0, 0], [1, 0, 0], [1, 1, 0], [2, 1, 0]],
         };
 
-        let piece_no_rotate = build_piece(&dingus_s, false, 0);
-        let piece_rotate = build_piece(&dingus_s, true, 0);
+        let piece_no_rotate = build_piece(&dingus_s, false, 0, "S");
+        let piece_rotate = build_piece(&dingus_s, true, 0, "S");
 
         let no_rotate_placements: usize = piece_no_rotate.fillers.values().map(|v| v.len()).sum();
         let rotate_placements: usize = piece_rotate.fillers.values().map(|v| v.len()).sum();
@@ -438,26 +448,22 @@ mod tests {
     fn solver_iterator_returns_nonempty() {
         let mut iter = SolverIterator::new();
         let first = iter.next().expect("expected at least one solution");
-        assert!(first.starts_with("We win!\n"));
+        assert!(!first.is_empty());
     }
 
     fn parse_universe(solution: &str) -> Universe {
         let lines: Vec<&str> = solution.lines().collect();
-        // Skip "We win!" header line, then 3 layers of 3 rows each separated by blank lines
         let mut universe: Universe = [[[0; 3]; 3]; 3];
-        let mut line_idx = 1; // skip "We win!"
-        for z in (0..3).rev() {
-            for y in (0..3).rev() {
-                let nums: Vec<i32> = lines[line_idx]
-                    .split_whitespace()
-                    .map(|s| s.parse().unwrap())
-                    .collect();
-                for x in 0..3 {
-                    universe[x][y][z] = nums[x];
+        for y in 0..3 {
+            let nums: Vec<i32> = lines[y]
+                .split_whitespace()
+                .map(|s| s.parse().unwrap())
+                .collect();
+            for x in 0..3 {
+                for z in 0..3 {
+                    universe[x][y][z] = nums[x * 3 + z];
                 }
-                line_idx += 1;
             }
-            line_idx += 1; // blank line between layers
         }
         universe
     }
@@ -469,12 +475,6 @@ mod tests {
         assert_eq!(solutions.len(), 415, "expected exactly 415 canonical solutions");
 
         for (i, solution) in solutions.iter().enumerate() {
-            assert!(
-                solution.starts_with("We win!\n"),
-                "solution {} missing header",
-                i
-            );
-
             let universe = parse_universe(solution);
 
             // Every cell must be filled (no zeros) with piece numbers 1..=7
