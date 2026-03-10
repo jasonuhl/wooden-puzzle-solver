@@ -4,9 +4,6 @@ import os
 import sys
 import multiprocessing
 
-#threads = multiprocessing.cpu_count()
-threads = None
-
 SPACES = [
     (x,y,z)
     for x in range(3)
@@ -91,40 +88,32 @@ def main():
     dingi = [dingusL, dingusL, dingusL, dingusL, dingusT, dingusS, dingusR]
 
     universe = instantiate_universe()
+    count = 0
 
-    if threads:
-        pids = []
-        for j in range(threads):
-            pid = os.fork()
-            if pid:
-                pids.append(pid)
-            else:
-                fill(universe, dingi, j, threads)
-                return
-
-        for pid in pids:
-            os.waitpid(pid, 0)
-
-    else:
-        fill(universe, dingi, 0, 1)
+    count += fill(universe, dingi)
+    sys.stderr.write("Found %d solutions\n" % count)
 
 
-def fill(universe, dingi, thread, threads, to_fill=None):
+def fill(universe, dingi, to_fill=None):
     """Try to fill universe.
 
     Try to fill universe given that all spaces not in the `empty` list have
     already been filled."""
 
+    count = 0
+
     if to_fill is None:
         to_fill = list(reversed(SPACES))
     elif not to_fill:
-        print_universe(universe)
-        return
+        if is_canonical(universe):
+            print_universe(universe)
+            count += 1
+        return count
 
     space = to_fill.pop()
     if universe[space[0]][space[1]][space[2]] != 0:
         # Space is already filled; continue to the next space:
-        fill(universe, dingi, thread, threads, to_fill)
+        count += fill(universe, dingi, to_fill)
     else:
         # Find a dingus that can fill space. We only need to look
         # among dingus.fillers[space] because any other positions of a
@@ -137,11 +126,12 @@ def fill(universe, dingi, thread, threads, to_fill=None):
                 for placement in dingus.fillers[space]:
                     if placeable(universe, placement):
                         place_cubes(universe, placement, 7 - len(dingi))
-                        fill(universe, dingi, thread, threads, to_fill)
+                        count += fill(universe, dingi, to_fill)
                         place_cubes(universe, placement, 0)
                 last = dingus
             dingi.insert(i, dingus)
     to_fill.append(space)
+    return count
 
 
 def rotate_xy(cubes, rotnum):
@@ -197,6 +187,65 @@ def placeable(universe, cubes):
 def place_cubes(universe, cubes, dingnum):
     for cube in cubes:
         universe[cube[0]][cube[1]][cube[2]] = dingnum
+
+
+def rotate_coord_xy(x, y, z, n):
+    if n == 0:
+        return (x, y, z)
+    if n == 1:
+        return (y, -x, z)
+    if n == 2:
+        return (-x, -y, z)
+    if n == 3:
+        return (-y, x, z)
+
+
+def rotate_coord_z(x, y, z, n):
+    if n == 0:
+        return (x, y, z)
+    if n == 1:
+        return (x, z, -y)
+    if n == 2:
+        return (x, -y, -z)
+    if n == 3:
+        return (x, -z, y)
+    if n == 4:
+        return (-z, y, x)
+    if n == 5:
+        return (z, y, -x)
+
+
+def rotate_world(universe, xy_rot, z_rot):
+    rotated = instantiate_universe()
+    for x in range(3):
+        for y in range(3):
+            for z in range(3):
+                cx, cy, cz = x - 1, y - 1, z - 1
+                rx, ry, rz = rotate_coord_xy(cx, cy, cz, xy_rot)
+                rx, ry, rz = rotate_coord_z(rx, ry, rz, z_rot)
+                rotated[rx + 1][ry + 1][rz + 1] = universe[x][y][z]
+    return rotated
+
+
+def universe_key(universe):
+    return tuple(
+        universe[x][y][z]
+        for z in range(3)
+        for y in range(3)
+        for x in range(3)
+    )
+
+
+def is_canonical(universe):
+    canonical_key = universe_key(universe)
+    for z_rot in range(6):
+        for xy_rot in range(4):
+            if z_rot == 0 and xy_rot == 0:
+                continue
+            rotated = rotate_world(universe, xy_rot, z_rot)
+            if universe_key(rotated) < canonical_key:
+                return False
+    return True
 
 
 def print_universe(universe):
