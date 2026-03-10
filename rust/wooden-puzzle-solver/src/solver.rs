@@ -440,4 +440,76 @@ mod tests {
         let first = iter.next().expect("expected at least one solution");
         assert!(first.starts_with("We win!\n"));
     }
+
+    fn parse_universe(solution: &str) -> Universe {
+        let lines: Vec<&str> = solution.lines().collect();
+        // Skip "We win!" header line, then 3 layers of 3 rows each separated by blank lines
+        let mut universe: Universe = [[[0; 3]; 3]; 3];
+        let mut line_idx = 1; // skip "We win!"
+        for z in (0..3).rev() {
+            for y in (0..3).rev() {
+                let nums: Vec<i32> = lines[line_idx]
+                    .split_whitespace()
+                    .map(|s| s.parse().unwrap())
+                    .collect();
+                for x in 0..3 {
+                    universe[x][y][z] = nums[x];
+                }
+                line_idx += 1;
+            }
+            line_idx += 1; // blank line between layers
+        }
+        universe
+    }
+
+    #[test]
+    fn solver_produces_415_canonical_complete_solutions() {
+        let solutions: Vec<String> = SolverIterator::new().collect();
+
+        assert_eq!(solutions.len(), 415, "expected exactly 415 canonical solutions");
+
+        for (i, solution) in solutions.iter().enumerate() {
+            assert!(
+                solution.starts_with("We win!\n"),
+                "solution {} missing header",
+                i
+            );
+
+            let universe = parse_universe(solution);
+
+            // Every cell must be filled (no zeros) with piece numbers 1..=7
+            for x in 0..3 {
+                for y in 0..3 {
+                    for z in 0..3 {
+                        let v = universe[x][y][z];
+                        assert!(
+                            (1..=7).contains(&v),
+                            "solution {} has unexpected value {} at ({},{},{})",
+                            i, v, x, y, z
+                        );
+                    }
+                }
+            }
+
+            // All 7 piece numbers (1-7) must be present
+            let mut piece_present = [false; 8];
+            for x in 0..3 {
+                for y in 0..3 {
+                    for z in 0..3 {
+                        piece_present[universe[x][y][z] as usize] = true;
+                    }
+                }
+            }
+            for p in 1..=7 {
+                assert!(piece_present[p], "solution {} missing piece {}", i, p);
+            }
+
+            // Must be canonical under cube rotations
+            assert!(
+                is_canonical_under_cube_rotations(&universe),
+                "solution {} is not canonical",
+                i
+            );
+        }
+    }
 }
